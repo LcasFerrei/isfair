@@ -1,0 +1,14 @@
+{
+  "name": "IsFair — Street Price & Cash Shield",
+  "short_name": "IsFair",
+  "description": "Fair street prices and cash help for travelers, anywhere in the world.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#131B30",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
