@@ -14,7 +14,7 @@ import { MONEY } from '../data/money';
 import { useI18n, type UiKey } from '../i18n';
 import { breakdown } from '../lib/cash';
 import { cn } from '../lib/cn';
-import { formatMoney } from '../lib/format';
+import { currencySymbol, formatAmount, formatMoney } from '../lib/format';
 import { VERDICT_META, getPriceRange, getVerdict } from '../lib/pricing';
 import { Link } from '../router';
 import type { WalletCurrency } from '../types';
@@ -297,16 +297,48 @@ function Receipt() {
 
 /* ------------------------------------------------------------------ */
 
-/** Faixa com preços de referência reais do app, de várias cidades */
+/**
+ * Cidades famosas fora do Brasil: preço típico de rua/balcão na moeda local (referência de 2025–2026).
+ * Valores aproximados para a vitrine; revisar de tempos em tempos.
+ */
+const WORLD_TICKER: { item: { pt: string; en: string }; city: { pt: string; en: string }; currency: string; min: number; max: number }[] = [
+  { item: { pt: 'Espresso no balcão', en: 'Espresso at the bar' }, city: { pt: 'Roma', en: 'Rome' }, currency: 'EUR', min: 1.2, max: 1.5 },
+  { item: { pt: 'Água 500 ml', en: 'Water 500 ml' }, city: { pt: 'Nova York', en: 'New York' }, currency: 'USD', min: 1, max: 2 },
+  { item: { pt: 'Pastel de nata', en: 'Pastel de nata' }, city: { pt: 'Lisboa', en: 'Lisbon' }, currency: 'EUR', min: 1.2, max: 1.5 },
+  { item: { pt: 'Pad thai de rua', en: 'Street pad thai' }, city: { pt: 'Bangkok', en: 'Bangkok' }, currency: 'THB', min: 50, max: 80 },
+  { item: { pt: 'Croissant', en: 'Croissant' }, city: { pt: 'Paris', en: 'Paris' }, currency: 'EUR', min: 1.2, max: 1.6 },
+  { item: { pt: 'Taco al pastor', en: 'Taco al pastor' }, city: { pt: 'Cidade do México', en: 'Mexico City' }, currency: 'MXN', min: 18, max: 30 },
+  { item: { pt: 'Lámen', en: 'Ramen' }, city: { pt: 'Tóquio', en: 'Tokyo' }, currency: 'JPY', min: 900, max: 1300 },
+  { item: { pt: 'Döner', en: 'Döner' }, city: { pt: 'Berlim', en: 'Berlin' }, currency: 'EUR', min: 7, max: 9 },
+  { item: { pt: 'Cerveja (pint)', en: 'Pint of beer' }, city: { pt: 'Londres', en: 'London' }, currency: 'GBP', min: 6, max: 7.5 },
+  { item: { pt: 'Churros com chocolate', en: 'Churros with chocolate' }, city: { pt: 'Madri', en: 'Madrid' }, currency: 'EUR', min: 4, max: 6 },
+  { item: { pt: 'Gelato', en: 'Gelato' }, city: { pt: 'Florença', en: 'Florence' }, currency: 'EUR', min: 3, max: 4.5 },
+  { item: { pt: 'Hot dog de carrinho', en: 'Street-cart hot dog' }, city: { pt: 'Nova York', en: 'New York' }, currency: 'USD', min: 3, max: 5 },
+];
+
+/** Faixa com preços de referência: catálogo do app no Brasil e cidades famosas do mundo */
 function Ticker() {
   const c = useCopy();
-  const { productShort } = useI18n();
+  const { productShort, lang } = useI18n();
+  const pt = lang === 'pt-BR';
+  const range = (currency: string, min: number, max: number) => `${currencySymbol(currency)} ${formatAmount(min)}–${formatAmount(max)}`;
+
+  // Brasil: faixas do catálogo do app, em reais
   const cities = CURATED_CITIES.slice(0, 8);
-  const items = PRODUCTS.filter((p) => p.quick).map((p, i) => {
+  const brazil = PRODUCTS.filter((p) => p.quick).map((p, i) => {
     const city = cities[i % cities.length];
     const r = getPriceRange(p, city);
-    return { key: `${p.id}-${city.id}`, text: `${productShort(p)} · ${city.name}`, price: `R$ ${r.fairMin}–${r.fairMax}` };
+    return { key: `${p.id}-${city.id}`, text: `${productShort(p)} · ${city.name}`, price: range('BRL', r.fairMin, r.fairMax) };
   });
+  const world = WORLD_TICKER.map((w) => ({
+    key: `${w.city.en}-${w.item.en}`,
+    text: `${pt ? w.item.pt : w.item.en} · ${pt ? w.city.pt : w.city.en}`,
+    price: range(w.currency, w.min, w.max),
+  }));
+  // Intercala: uma cidade do Brasil, uma do mundo
+  const items = Array.from({ length: Math.max(brazil.length, world.length) }, (_, i) => [brazil[i], world[i]])
+    .flat()
+    .filter((item): item is (typeof brazil)[number] => Boolean(item));
 
   return (
     <section aria-label={c('tickerLabel')} className="overflow-hidden border-b border-line bg-white py-4">
