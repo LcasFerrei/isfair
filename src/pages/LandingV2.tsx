@@ -15,9 +15,9 @@ import { useI18n, type UiKey } from '../i18n';
 import { breakdown } from '../lib/cash';
 import { cn } from '../lib/cn';
 import { currencySymbol, formatAmount, formatMoney } from '../lib/format';
-import { VERDICT_META, getPriceRange, getVerdict } from '../lib/pricing';
+import { VERDICT_META, getPriceRange } from '../lib/pricing';
 import { Link } from '../router';
-import type { WalletCurrency } from '../types';
+import type { VerdictLevel, WalletCurrency } from '../types';
 
 /*
  * Página inicial 2.0 (prévia em /v2). A versão atual continua em pages/Landing.tsx.
@@ -42,8 +42,10 @@ const COPY = {
     receiptAsked: 'Pediram',
     receiptFair: 'Preço justo na cidade',
     receiptDiff: 'Acima do justo',
-    receiptStamp: 'Gringo Tax',
     receiptTip: 'Dica: peça {ask}. É o teto do preço justo.',
+    receiptWithin: 'Dentro do preço justo',
+    receiptTipFair: 'Pode pagar tranquilo: é preço de morador.',
+    receiptTipTourist: 'Preço de área turística. Dá para negociar: peça {ask}.',
     tickerLabel: 'Faixas de referência do app',
     howTitle: 'Três passos, na fila da barraca.',
     step1Title: 'Fotografe',
@@ -81,8 +83,10 @@ const COPY = {
     receiptAsked: 'Asked',
     receiptFair: 'Fair price in town',
     receiptDiff: 'Above fair',
-    receiptStamp: 'Gringo Tax',
     receiptTip: 'Tip: offer {ask}. That’s the top of the fair range.',
+    receiptWithin: 'Within the fair price',
+    receiptTipFair: 'Go ahead and pay: that’s what locals pay.',
+    receiptTipTourist: 'Tourist-area price. You can haggle: offer {ask}.',
     tickerLabel: 'App reference ranges',
     howTitle: 'Three steps, while you’re in line.',
     step1Title: 'Snap',
@@ -244,52 +248,134 @@ const RECEIPT_EDGE = (() => {
   return `polygon(${[...top, ...bottom].join(", ")})`;
 })();
 
-/** Recibo da verificação: o caso do título, com a faixa e o carimbo calculados pelo app */
+/** Quanto tempo cada caso fica no recibo antes de trocar */
+const RECEIPT_STEP_MS = 3500;
+/** Depois de um clique num caso, espera isso antes de voltar a alternar sozinho */
+const RECEIPT_RESUME_MS = 8000;
+
+/** Os três casos do recibo, do mais barato ao mais caro */
+const RECEIPT_ORDER: VerdictLevel[] = ['fair', 'tourist', 'abusive'];
+
+/**
+ * Recibo da verificação alternando entre os três vereditos (justo, área turística, Gringo Tax).
+ * Os preços pedidos saem da faixa real do app para a água de coco no Rio; o caso "Gringo Tax" é o do título.
+ */
 function Receipt() {
   const c = useCopy();
-  const { productName } = useI18n();
+  const { t, productName } = useI18n();
   const range = getPriceRange(DEMO_PRODUCT, DEMO_CITY);
-  const verdict = getVerdict(DEMO_ASKED, range);
+  const askedFor: Record<VerdictLevel, number> = {
+    fair: Math.round((range.fairMin + range.fairMax) / 2),
+    tourist: Math.round((range.fairMax + range.touristMax) / 2),
+    abusive: DEMO_ASKED,
+  };
+
+  const [reducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // Sem animação: fica no caso do título
+  const [index, setIndex] = useState(reducedMotion ? 2 : 0);
+  const [pausedUntil, setPausedUntil] = useState(0);
+  const [hovering, setHovering] = useState(false);
+
+  useEffect(() => {
+    if (reducedMotion || hovering) return;
+    const wait = Math.max(RECEIPT_STEP_MS, pausedUntil - Date.now());
+    const id = window.setTimeout(() => setIndex((i) => (i + 1) % RECEIPT_ORDER.length), wait);
+    return () => window.clearTimeout(id);
+  }, [index, hovering, pausedUntil, reducedMotion]);
+
+  const verdict = RECEIPT_ORDER[index];
+  const asked = askedFor[verdict];
+  const over = asked - range.fairMax;
+  const meta = VERDICT_META[verdict];
   const money = (v: number) => formatMoney(v, 'BRL');
-  const rows: [string, string, boolean?][] = [
-    [c('receiptAsked'), money(DEMO_ASKED)],
-    [c('receiptFair'), `${money(range.fairMin)} – ${money(range.fairMax)}`],
-    [c('receiptDiff'), `+ ${money(DEMO_ASKED - range.fairMax)}`, true],
+
+  const rows: { label: string; value: string; color?: string }[] = [
+    { label: c('receiptAsked'), value: money(asked) },
+    { label: c('receiptFair'), value: `${money(range.fairMin)} – ${money(range.fairMax)}` },
+    over > 0
+      ? { label: c('receiptDiff'), value: `+ ${money(over)}`, color: meta.text }
+      : { label: c('receiptWithin'), value: '✓', color: meta.text },
   ];
+  const tip =
+    verdict === 'fair'
+      ? c('receiptTipFair')
+      : verdict === 'tourist'
+        ? c('receiptTipTourist', { ask: money(range.fairMax) })
+        : c('receiptTip', { ask: money(range.fairMax) });
 
   return (
     // drop-shadow (e não box-shadow): acompanha a borda serrilhada recortada
-    <div className="relative mx-auto w-full max-w-sm drop-shadow-[0_24px_32px_rgba(0,0,0,0.45)] lg:ms-auto">
-      {/* Borda serrilhada de papel de recibo, em cima e embaixo */}
-      <div className="relative bg-white px-6 pb-8 pt-7 text-ink" style={{ clipPath: RECEIPT_EDGE }}>
-        <div className="flex items-baseline justify-between font-mono text-xs uppercase tracking-widest text-ink-3">
-          <span>IsFair · {c('receiptHeader')}</span>
-          <span>{DEMO_CITY.name}</span>
-        </div>
-        <p className="mt-5 text-xl font-bold">{productName(DEMO_PRODUCT)}</p>
-        <dl className="mt-4 space-y-2.5 border-y border-dashed border-ink/25 py-4 font-mono text-sm">
-          {rows.map(([label, value, strong]) => (
-            <div key={label} className="flex items-baseline gap-2">
-              <dt className="shrink-0 text-ink-2">{label}</dt>
-              <span aria-hidden className="mb-1 flex-1 border-b border-dotted border-ink/25" />
-              <dd dir="ltr" className={cn('shrink-0 tabular-nums', strong && 'font-bold text-abusive-text')}>
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-5 text-[11px] [&_p]:text-[11px]">
-          <PriceRangeBar range={range} verdict={verdict} currency="BRL" />
-        </div>
-        <p className="mt-5 text-sm text-ink-2">{c('receiptTip', { ask: money(range.fairMax) })}</p>
+    <div
+      className="relative mx-auto w-full max-w-sm lg:ms-auto"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
+      <div className="drop-shadow-[0_24px_32px_rgba(0,0,0,0.45)]">
+        {/* Borda serrilhada de papel de recibo, em cima e embaixo */}
+        <div className="relative bg-white px-6 pb-8 pt-7 text-ink" style={{ clipPath: RECEIPT_EDGE }}>
+          <div className="flex items-baseline justify-between font-mono text-xs uppercase tracking-widest text-ink-3">
+            <span>IsFair · {c('receiptHeader')}</span>
+            <span>{DEMO_CITY.name}</span>
+          </div>
+          <p className="mt-5 text-xl font-bold">{productName(DEMO_PRODUCT)}</p>
+          <dl className="mt-4 space-y-2.5 border-y border-dashed border-ink/25 py-4 font-mono text-sm" aria-live="polite">
+            {rows.map((row, i) => (
+              <div key={i} className="flex items-baseline gap-2">
+                <dt key={`${verdict}-label`} className="shrink-0 animate-fade-in text-ink-2">
+                  {row.label}
+                </dt>
+                <span aria-hidden className="mb-1 flex-1 border-b border-dotted border-ink/25" />
+                {/* key muda a cada caso: o valor entra de novo com a animação */}
+                <dd
+                  key={`${verdict}-value`}
+                  dir="ltr"
+                  className={cn('shrink-0 animate-fade-in tabular-nums', row.color && 'font-bold')}
+                  style={{ color: row.color }}
+                >
+                  {row.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-5 text-[11px] [&_p]:text-[11px]">
+            <PriceRangeBar range={range} verdict={verdict} currency="BRL" />
+          </div>
+          <p key={`${verdict}-tip`} className="mt-5 min-h-[2.5rem] animate-fade-in text-sm text-ink-2">
+            {tip}
+          </p>
 
-        {/* Carimbo */}
-        <span
-          className="absolute end-5 top-16 rotate-[-12deg] rounded-sm border-[3px] px-2 py-0.5 font-mono text-sm font-bold uppercase tracking-widest opacity-90"
-          style={{ borderColor: VERDICT_META[verdict].text, color: VERDICT_META[verdict].text }}
-        >
-          {c('receiptStamp')}
-        </span>
+          {/* Carimbo: "bate" no papel a cada troca */}
+          <span
+            key={`${verdict}-stamp`}
+            className="absolute end-5 top-16 rotate-[-12deg] rounded-sm border-[3px] bg-white/70 px-2 py-0.5 font-mono text-sm font-bold uppercase tracking-widest motion-safe:animate-stamp"
+            style={{ borderColor: meta.text, color: meta.text }}
+          >
+            {t(`verdict.${verdict}.short`)}
+          </span>
+        </div>
+      </div>
+
+      {/* Os três casos: mostra qual está no recibo e deixa escolher */}
+      <div role="tablist" className="mt-6 flex justify-center gap-2">
+        {RECEIPT_ORDER.map((v, i) => (
+          <button
+            key={v}
+            type="button"
+            role="tab"
+            aria-selected={i === index}
+            onClick={() => {
+              setIndex(i);
+              setPausedUntil(Date.now() + RECEIPT_RESUME_MS);
+            }}
+            className={cn(
+              'flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors',
+              i === index ? 'bg-white text-ink' : 'bg-white/10 text-white/70 hover:bg-white/20',
+            )}
+          >
+            <span className="h-2 w-2 rounded-full" style={{ background: VERDICT_META[v].color }} />
+            {t(`verdict.${v}.short`)}
+          </button>
+        ))}
       </div>
     </div>
   );

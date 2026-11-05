@@ -17,6 +17,12 @@ export default {
         sans: ['Figtree', ...defaultTheme.fontFamily.sans],
       },
       keyframes: {
+        // Carimbo do recibo: cai grande sobre o papel e assenta inclinado
+        stamp: {
+          '0%': { opacity: '0', transform: 'scale(1.9) rotate(-12deg)' },
+          '60%': { opacity: '1', transform: 'scale(0.94) rotate(-12deg)' },
+          '100%': { opacity: '1', transform: 'scale(1) rotate(-12deg)' },
+        },
         // Faixa contínua: o conteúdo vem duplicado, então andar metade da largura volta ao mesmo ponto
         marquee: {
           '0%': { transform: 'translateX(0)' },
@@ -78,6 +84,7 @@ export default {
       },
       animation: {
         marquee: 'marquee 60s linear infinite',
+        stamp: 'stamp 0.45s cubic-bezier(0.3, 0.7, 0.4, 1) both',
         'fade-in': 'fade-in 0.2s ease-out both',
         'sheet-up': 'sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both',
         'overlay-in': 'overlay-in 0.2s ease-out both',
