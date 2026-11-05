@@ -17,6 +17,11 @@ export default {
         sans: ['Figtree', ...defaultTheme.fontFamily.sans],
       },
       keyframes: {
+        // Faixa contínua: o conteúdo vem duplicado, então andar metade da largura volta ao mesmo ponto
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
         'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(6px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -72,6 +77,7 @@ export default {
         },
       },
       animation: {
+        marquee: 'marquee 60s linear infinite',
         'fade-in': 'fade-in 0.2s ease-out both',
         'sheet-up': 'sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1) both',
         'overlay-in': 'overlay-in 0.2s ease-out both',

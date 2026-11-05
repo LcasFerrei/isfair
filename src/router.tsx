@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState, type AnchorHTMLAttributes, type ReactNode } from 'react';
 
 /** Rotas do site. Sem biblioteca: usa a History API e o servidor devolve o index.html em qualquer caminho. */
-export type Route = 'landing' | 'app' | 'login' | 'signup' | 'forgot' | 'reset' | 'terms' | 'privacy';
+export type Route = 'landing' | 'landingV2' | 'app' | 'login' | 'signup' | 'forgot' | 'reset' | 'terms' | 'privacy';
 
 const PATHS: Record<Route, string> = {
   landing: '/',
+  // Prévia da página inicial 2.0 (não aparece em nenhum link)
+  landingV2: '/v2',
   app: '/app',
   login: '/entrar',
   signup: '/cadastro',
