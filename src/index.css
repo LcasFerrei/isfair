@@ -5,6 +5,33 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Barra de rolagem fina, sem setas, no azul-marinho da marca (herdada pelas áreas com rolagem) */
+    scrollbar-color: rgba(11, 27, 61, 0.28) transparent;
+  }
+
+  * {
+    scrollbar-width: thin;
+  }
+
+  /* Safari (não tem scrollbar-color); Chrome e Edge usam as regras acima */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-color: rgba(11, 27, 61, 0.28);
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(11, 27, 61, 0.5);
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
   }
 
   body {
