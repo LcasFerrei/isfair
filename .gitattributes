@@ -1,0 +1,4 @@
+# Quebra de linha LF em todo o repositório (Windows e a Vercel, que roda Linux, ficam iguais)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
