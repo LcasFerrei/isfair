@@ -26,6 +26,11 @@ No plano gratuito o Google pode usar as fotos enviadas para melhorar os produtos
 2. Em Settings → Environment Variables, adicione `GEMINI_API_KEY`
 3. Deploy
 
+## Limite de uso do Gemini
+
+Com o Supabase configurado, rode também `supabase/rate_limits.sql`. Cada IP pode fazer 30 fotos e 60 buscas
+por hora; `GEMINI_DAILY_LIMIT` (opcional) põe um teto diário somando todo mundo. Sem a tabela, o app funciona sem limite.
+
 ## Relatos da comunidade (Supabase)
 
 Quando o turista informa quanto pagou, o relato vai para a tabela `reports` no Supabase e o resultado

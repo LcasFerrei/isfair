@@ -257,7 +257,7 @@ const PRIVACY_PT: LegalDocument = {
       heading: '2. Fotos e inteligência artificial',
       paragraphs: [
         'Quando você fotografa um produto, a imagem é enviada ao nosso servidor e repassada ao Google Gemini, junto com a cidade e o idioma, para identificar o item, ler o preço da etiqueta e estimar o preço justo. Nas verificações sem foto, enviamos só o nome do item, a cidade e o idioma.',
-        'Não guardamos as fotos. Registros técnicos temporários do servidor podem conter mensagens de erro, sem a imagem.',
+        'Não guardamos as fotos. Registros técnicos temporários do servidor podem conter mensagens de erro, sem a imagem. Para evitar abuso, contamos quantos pedidos cada aparelho faz por hora usando um código gerado a partir do IP (sem guardar o IP), apagado em até 2 dias.',
         'Importante: o IsFair usa o nível gratuito da API do Gemini. Nesse nível, o Google pode usar o conteúdo enviado para melhorar seus produtos, e pessoas podem revisá-lo. Por isso, fotografe só o produto: evite rostos, documentos, placas de carro ou qualquer informação pessoal.',
       ],
     },
@@ -384,7 +384,7 @@ const PRIVACY_EN: LegalDocument = {
       heading: '2. Photos and artificial intelligence',
       paragraphs: [
         'When you photograph an item, the image is sent to our server and passed to Google Gemini, together with the city and language, to identify the item, read the price tag and estimate the fair price. For checks without a photo, we send only the item name, city and language.',
-        'We do not store photos. Temporary technical server logs may contain error messages, without the image.',
+        'We do not store photos. Temporary technical server logs may contain error messages, without the image. To prevent abuse, we count how many requests each device makes per hour using a code derived from the IP (the IP itself is not stored), deleted within 2 days.',
         'Important: IsFair uses the free tier of the Gemini API. On that tier, Google may use submitted content to improve its products, and people may review it. So photograph only the item: avoid faces, documents, license plates or any personal information.',
       ],
     },

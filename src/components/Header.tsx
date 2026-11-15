@@ -222,6 +222,11 @@ export function Header({
         ))}
         <p className="mt-4 text-xs text-ink-2">
           {ratesUpdatedAt ? t('currency.updated', { date: formatDate(ratesUpdatedAt) }) : t('currency.offline')}
+          {/* Crédito exigido pelo plano grátis da ExchangeRate-API (open.er-api.com) */}
+          {' · '}
+          <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" className="underline">
+            Rates By Exchange Rate API
+          </a>
         </p>
       </Sheet>
 

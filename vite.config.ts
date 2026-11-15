@@ -3,7 +3,9 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { estimatePrice } from './server/estimate';
-import { clientIp, communityStats, submitReport } from './server/reports';
+import { communityStats, submitReport } from './server/reports';
+import { checkRateLimit } from './server/rateLimit';
+import { clientIp } from './server/supabaseAdmin';
 import { DEFAULT_GEMINI_MODEL, FALLBACK_GEMINI_MODEL, REQUEST_TIMEOUT_MS, identifyProduct } from './server/identify';
 
 type Handler = (body: unknown, req: IncomingMessage) => Promise<{ status: number; body: unknown }>;
@@ -59,24 +61,31 @@ function adsTxt(env: Record<string, string>): Plugin {
   };
 }
 
+/** IP de quem chamou (no dev, quase sempre o próprio computador) */
+function ipOf(req: IncomingMessage) {
+  const forwarded = req.headers['x-forwarded-for'];
+  return clientIp(Array.isArray(forwarded) ? forwarded[0] : forwarded, req.socket.remoteAddress);
+}
+
 /** Atende /api/* no `npm run dev`, igual às funções da Vercel em produção. */
 function apiDevServer(env: Record<string, string>): Plugin {
   const model = env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   return {
     name: 'isfair-api-dev',
     configureServer(server) {
-      server.middlewares.use('/api/identify', jsonRoute((body) => identifyProduct(body, env.GEMINI_API_KEY, model)));
+      server.middlewares.use(
+        '/api/identify',
+        jsonRoute(async (body, req) => (await checkRateLimit('identify', ipOf(req), env)) ?? identifyProduct(body, env.GEMINI_API_KEY, model)),
+      );
       server.middlewares.use(
         '/api/estimate',
-        jsonRoute((body) => estimatePrice(body, env.GEMINI_API_KEY, [model, FALLBACK_GEMINI_MODEL], REQUEST_TIMEOUT_MS)),
+        jsonRoute(
+          async (body, req) =>
+            (await checkRateLimit('estimate', ipOf(req), env)) ??
+            estimatePrice(body, env.GEMINI_API_KEY, [model, FALLBACK_GEMINI_MODEL], REQUEST_TIMEOUT_MS),
+        ),
       );
-      server.middlewares.use(
-        '/api/report',
-        jsonRoute((body, req) => {
-          const forwarded = req.headers['x-forwarded-for'];
-          return submitReport(body, clientIp(Array.isArray(forwarded) ? forwarded[0] : forwarded, req.socket.remoteAddress), env);
-        }),
-      );
+      server.middlewares.use('/api/report', jsonRoute((body, req) => submitReport(body, ipOf(req), env)));
       server.middlewares.use('/api/community', jsonRoute((body) => communityStats(body, env)));
     },
   };

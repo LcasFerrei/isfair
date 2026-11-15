@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { adminClient, hashIp, type ServerEnv } from './supabaseAdmin';
 import { MIN_REPORTS } from '../src/lib/communityConfig';
 import type { CommunityStats } from '../src/types';
 
@@ -9,13 +8,7 @@ import type { CommunityStats } from '../src/types';
  * Precisa de SUPABASE_SERVICE_ROLE_KEY: essa chave ignora o RLS, então fica só no servidor (sem VITE_).
  */
 
-export interface ReportsEnv {
-  SUPABASE_URL?: string;
-  VITE_SUPABASE_URL?: string;
-  SUPABASE_SERVICE_ROLE_KEY?: string;
-  /** Sal do hash do IP. Sem ele, usa a própria service_role (também secreta). */
-  REPORT_IP_SALT?: string;
-}
+export type ReportsEnv = ServerEnv;
 
 type Result = { status: number; body: unknown };
 
@@ -25,18 +18,6 @@ const WINDOW_MONTHS = 12;
 const MAX_PER_HOUR = 30;
 /** Valores fora de [mediana ÷ 3, mediana × 3] são descartados como erro ou trote */
 const OUTLIER_FACTOR = 3;
-
-let cached: { key: string; client: SupabaseClient } | null = null;
-
-function clientFor(env: ReportsEnv): SupabaseClient | null {
-  const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
-  const key = env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  if (cached?.key !== url + key) {
-    cached = { key: url + key, client: createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }) };
-  }
-  return cached.client;
-}
 
 const unavailable: Result = { status: 503, body: { code: 'unavailable' } };
 const badRequest: Result = { status: 400, body: { code: 'badRequest' } };
@@ -61,7 +42,7 @@ function median(sorted: number[]): number {
 
 /** POST /api/community — mediana do que os turistas pagaram por um item numa cidade, nos últimos 12 meses */
 export async function communityStats(body: unknown, env: ReportsEnv): Promise<Result> {
-  const db = clientFor(env);
+  const db = adminClient(env);
   if (!db) return unavailable;
   const { productKey, cityId, currency } = (body ?? {}) as Record<string, unknown>;
   if (!isText(productKey, 100) || !isText(cityId, 160) || !isCurrency(currency)) return badRequest;
@@ -96,7 +77,7 @@ export async function communityStats(body: unknown, env: ReportsEnv): Promise<Re
 
 /** POST /api/report — grava quanto o turista pagou */
 export async function submitReport(body: unknown, ip: string | undefined, env: ReportsEnv): Promise<Result> {
-  const db = clientFor(env);
+  const db = adminClient(env);
   if (!db) return unavailable;
   const { productKey, cityId, currency, paid, origin, accessToken } = (body ?? {}) as Record<string, unknown>;
   if (!isText(productKey, 100) || !isText(cityId, 160) || !isCurrency(currency)) return badRequest;
@@ -110,8 +91,7 @@ export async function submitReport(body: unknown, ip: string | undefined, env: R
     userId = data.user?.id ?? null;
   }
 
-  const salt = env.REPORT_IP_SALT || env.SUPABASE_SERVICE_ROLE_KEY || '';
-  const ipHash = ip ? createHash('sha256').update(`${salt}:${ip}`).digest('hex') : null;
+  const ipHash = hashIp(ip, env);
   const key = normalizeKey(productKey);
 
   if (ipHash) {
@@ -152,6 +132,3 @@ export async function submitReport(body: unknown, ip: string | undefined, env: R
   return { status: 201, body: { ok: true } };
 }
 
-/** IP de quem chamou, atrás do proxy da Vercel */
-export const clientIp = (forwardedFor: string | null | undefined, fallback?: string) =>
-  forwardedFor?.split(',')[0]?.trim() || fallback;

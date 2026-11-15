@@ -1,4 +1,5 @@
-import { clientIp, submitReport } from '../server/reports';
+import { submitReport } from '../server/reports';
+import { clientIp } from '../server/supabaseAdmin';
 
 /** Função serverless da Vercel: POST /api/report */
 export async function POST(request: Request): Promise<Response> {
