@@ -3,9 +3,10 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { estimatePrice } from './server/estimate';
+import { clientIp, communityStats, submitReport } from './server/reports';
 import { DEFAULT_GEMINI_MODEL, FALLBACK_GEMINI_MODEL, REQUEST_TIMEOUT_MS, identifyProduct } from './server/identify';
 
-type Handler = (body: unknown) => Promise<{ status: number; body: unknown }>;
+type Handler = (body: unknown, req: IncomingMessage) => Promise<{ status: number; body: unknown }>;
 
 /** Lê o JSON do corpo, chama o handler e devolve a resposta (mesmo contrato das funções da Vercel). */
 function jsonRoute(handler: Handler) {
@@ -24,7 +25,7 @@ function jsonRoute(handler: Handler) {
       } catch {
         // corpo inválido: o handler responde 400
       }
-      const result = await handler(body);
+      const result = await handler(body, req);
       res.statusCode = result.status;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(result.body));
@@ -69,6 +70,14 @@ function apiDevServer(env: Record<string, string>): Plugin {
         '/api/estimate',
         jsonRoute((body) => estimatePrice(body, env.GEMINI_API_KEY, [model, FALLBACK_GEMINI_MODEL], REQUEST_TIMEOUT_MS)),
       );
+      server.middlewares.use(
+        '/api/report',
+        jsonRoute((body, req) => {
+          const forwarded = req.headers['x-forwarded-for'];
+          return submitReport(body, clientIp(Array.isArray(forwarded) ? forwarded[0] : forwarded, req.socket.remoteAddress), env);
+        }),
+      );
+      server.middlewares.use('/api/community', jsonRoute((body) => communityStats(body, env)));
     },
   };
 }

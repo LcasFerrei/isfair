@@ -6,8 +6,8 @@ import { BottomNav } from './components/BottomNav';
 import { Header } from './components/Header';
 import { NotificationToast } from './components/NotificationToast';
 import { ConfirmSheet } from './components/ui/ConfirmSheet';
-import { DEFAULT_CITY, cityOf, getCity } from './data/cities';
-import { CUSTOM_PRODUCT_ID, detectCurrency, findProduct } from './data/mockData';
+import { DEFAULT_CITY, getCity } from './data/cities';
+import { CURRENCIES, CUSTOM_PRODUCT_ID, detectCurrency, findProduct } from './data/mockData';
 import { isWalletCurrency } from './data/money';
 import { localCurrencyFor } from './data/worldCurrencies';
 import { useLiveRates } from './hooks/useLiveRates';
@@ -17,7 +17,8 @@ import { useRouter } from './router';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { breakdown, mergeWallets, piecesToWallet, walletTotal } from './lib/cash';
 import { convert, setLocalCurrency, uid } from './lib/format';
-import { communityKey, getVerdict, initialCommunityStats, pickTipIndex } from './lib/pricing';
+import { sendReport } from './lib/community';
+import { getVerdict, pickTipIndex } from './lib/pricing';
 import { HistoryScreen } from './screens/HistoryScreen';
 import { NotificationsScreen, describeNotification } from './screens/NotificationsScreen';
 import { ResultScreen } from './screens/ResultScreen';
@@ -27,7 +28,6 @@ import { WalletScreen } from './screens/WalletScreen';
 import type {
   CashRequest,
   City,
-  CommunityStats,
   Consultation,
   AppNotification,
   CurrencyCode,
@@ -68,7 +68,6 @@ export default function App() {
   const [storedCity, setCity] = useLocalStorage<City>('isfair:city-v2', DEFAULT_CITY);
   const [currency, setCurrency] = useLocalStorage<CurrencyCode>('isfair:currency', detectCurrency());
   const [history, setHistory] = useLocalStorage<Consultation[]>('isfair:history', []);
-  const [community, setCommunity] = useLocalStorage<Record<string, CommunityStats>>('isfair:community', {});
   const [productId, setProductId] = useState<string | null>(null);
   const [priceInput, setPriceInput] = useState('');
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -134,20 +133,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tab, currentId]);
 
-  /** Itens fora do catálogo agrupam relatos pelo nome que a IA leu */
-  const statsKey = (c: Consultation) =>
-    communityKey(c.productId === CUSTOM_PRODUCT_ID ? `custom:${(c.item?.name ?? '').toLowerCase()}` : c.productId, c.cityId);
-
-  const statsFor = (c: Consultation): CommunityStats => {
-    const saved = community[statsKey(c)];
-    if (saved) return saved;
-    const product = findProduct(c.productId);
-    // Com preço da IA (ou item fora do catálogo) não inventamos relatos: começa do zero
-    return product && !c.ai
-      ? initialCommunityStats(product, cityOf(c))
-      : { reports: 0, avgPaid: (c.range.fairMin + c.range.fairMax) / 2 };
-  };
-
   const handleVerify = ({ product, price, range, detected, ai }: Verification) => {
     const now = Date.now();
     const consultation: Consultation = {
@@ -180,11 +165,15 @@ export default function App() {
     setTab('result');
   };
 
-  const handleReport = (c: Consultation, paid: number) => {
-    const stats = statsFor(c);
-    const reports = stats.reports + 1;
-    const avgPaid = Math.round(((stats.avgPaid * stats.reports + paid) / reports) * 100) / 100;
-    setCommunity((prev) => ({ ...prev, [statsKey(c)]: { reports, avgPaid } }));
+  /** De onde o turista é, pela moeda de casa (EUR → "EU"); vai no relato só se ele deixar */
+  const homeFlag = CURRENCIES.find((x) => x.code === currency)?.flag ?? null;
+
+  /** Muda quando um relato termina de ser gravado, para o resultado buscar a média de novo */
+  const [reportTick, setReportTick] = useState(0);
+
+  const handleReport = (c: Consultation, paid: number, origin: string | null) => {
+    // O valor fica no histórico de qualquer jeito; o envio para a comunidade não bloqueia a tela
+    void sendReport(c, paid, origin).then((ok) => ok && setReportTick((n) => n + 1));
     setHistory((prev) => prev.map((h) => (h.id === c.id ? { ...h, paidReported: paid } : h)));
   };
 
@@ -320,10 +309,11 @@ export default function App() {
           <ResultScreen
             consultation={current}
             fx={fx}
-            stats={statsFor(current)}
+            origin={homeFlag}
+            communityRefresh={reportTick}
             onBack={() => setTab('scanner')}
             onPay={() => handlePay(current)}
-            onReport={(paid) => handleReport(current, paid)}
+            onReport={(paid, origin) => handleReport(current, paid, origin)}
           />
         ) : tab === 'cash' ? (
           <WalletScreen

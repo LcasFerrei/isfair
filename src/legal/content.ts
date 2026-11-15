@@ -81,7 +81,7 @@ const TERMS_PT: LegalDocument = {
       id: 'comunidade',
       heading: '7. Relatos da comunidade',
       paragraphs: [
-        'Quando você informa quanto pagou por algo, o valor entra nas estatísticas de preço de forma anônima. Ao enviar um relato, você autoriza o IsFair a usá-lo, de forma gratuita e sem identificação, para melhorar as estimativas para todos.',
+        'Quando você informa quanto pagou por algo, o valor entra nas estatísticas de preço da cidade. Outras pessoas veem só a média de vários relatos, nunca o seu relato isolado nem quem o enviou. Ao enviar um relato, você autoriza o IsFair a usá-lo, de forma gratuita, para melhorar as estimativas para todos. O que é guardado está na Política de privacidade.',
       ],
     },
     {
@@ -186,7 +186,7 @@ const TERMS_EN: LegalDocument = {
       id: 'comunidade',
       heading: '7. Community reports',
       paragraphs: [
-        'When you report how much you paid for something, the amount is added to price statistics anonymously. By submitting a report, you allow IsFair to use it, free of charge and without identifying you, to improve estimates for everyone.',
+        'When you report how much you paid for something, the amount is added to the city’s price statistics. Other people only see the average of several reports, never your individual report or who sent it. By submitting a report, you allow IsFair to use it, free of charge, to improve estimates for everyone. What is stored is described in the Privacy policy.',
       ],
     },
     {
@@ -269,8 +269,22 @@ const PRIVACY_PT: LegalDocument = {
       ],
     },
     {
+      id: 'relatos',
+      heading: '4. Relatos de preço',
+      paragraphs: [
+        'Se você informar quanto pagou por algo, o relato é enviado ao nosso banco de dados (Supabase) para calcular a média da comunidade. Guardamos:',
+      ],
+      items: [
+        ['Item, cidade e valor', 'o produto (ou o nome lido na foto), a cidade, a moeda e o valor pago.'],
+        ['Mês e ano', 'a data do relato, para usar só preços recentes na média.'],
+        ['De onde você é', 'só se você deixar a opção ligada: o país (ou região, como a União Europeia) da sua moeda de casa.'],
+        ['Conta', 'se você estiver logado, o identificador interno da conta, para evitar relatos repetidos e apagar os seus relatos se você pedir. Nunca é mostrado a ninguém.'],
+        ['IP protegido', 'um código gerado a partir do seu IP (hash com chave secreta, sem guardar o IP), só para barrar spam. Ele é apagado depois de 30 dias.'],
+      ],
+    },
+    {
       id: 'terceiros',
-      heading: '4. Serviços de terceiros',
+      heading: '5. Serviços de terceiros',
       paragraphs: ['Para funcionar, o IsFair conversa com estes serviços, que recebem o seu endereço IP e os dados indicados:'],
       items: [
         ['Google Gemini (Google)', 'fotos, nome do item, cidade e idioma, para identificação e estimativas.'],
@@ -279,13 +293,14 @@ const PRIVACY_PT: LegalDocument = {
         ['ExchangeRate-API (open.er-api.com)', 'nenhum dado pessoal; só baixamos as cotações do dia.'],
         ['Open Food Facts', 'o nome do produto identificado, para buscar a foto da embalagem.'],
         ['Google Fonts', 'a fonte do app é carregada dos servidores do Google.'],
+        ['Supabase', 'banco de dados dos relatos de preço (seção 4) e das contas.'],
         ['Vercel', 'hospedagem do site e do servidor, com registros de acesso (IP, navegador, data).'],
-        ['Google AdSense', 'anúncios, conforme a seção 5.'],
+        ['Google AdSense', 'anúncios, conforme a seção 6.'],
       ],
     },
     {
       id: 'anuncios',
-      heading: '5. Anúncios e cookies',
+      heading: '6. Anúncios e cookies',
       paragraphs: [
         'O IsFair é gratuito e se mantém com anúncios do Google AdSense, exibidos na página inicial, abaixo do Teste rápido, no fim do resultado de uma verificação, no histórico, no resumo da carteira e no menu lateral. Nunca durante a foto, o pagamento ou a edição da carteira.',
         'O Google e seus parceiros usam cookies e identificadores para mostrar anúncios, limitar repetições e medir resultados, inclusive com base em visitas anteriores a este e a outros sites. Na Europa, no Reino Unido e na Suíça, pedimos seu consentimento antes de anúncios personalizados; você pode mudar a escolha a qualquer momento.',
@@ -294,7 +309,7 @@ const PRIVACY_PT: LegalDocument = {
     },
     {
       id: 'finalidades',
-      heading: '6. Para que usamos os dados (bases legais)',
+      heading: '7. Para que usamos os dados (bases legais)',
       paragraphs: [],
       items: [
         ['Executar o serviço que você pediu', 'estimar preços, identificar produtos, converter moedas e calcular o troco.'],
@@ -304,43 +319,43 @@ const PRIVACY_PT: LegalDocument = {
     },
     {
       id: 'retencao',
-      heading: '7. Por quanto tempo',
+      heading: '8. Por quanto tempo',
       paragraphs: [
-        'Os dados no seu aparelho ficam lá até você apagá-los. O histórico, a carteira e as notificações têm limite de itens, e as estimativas expiram em 7 dias. As fotos não são guardadas por nós. Os prazos de terceiros seguem as políticas de cada serviço.',
+        'Os dados no seu aparelho ficam lá até você apagá-los. O histórico, a carteira e as notificações têm limite de itens, e as estimativas expiram em 7 dias. As fotos não são guardadas por nós. Os relatos de preço ficam no banco de dados enquanto o serviço existir, mas só os dos últimos 12 meses entram na média; o código do IP é apagado em 30 dias. Os prazos de terceiros seguem as políticas de cada serviço.',
       ],
     },
     {
       id: 'direitos',
-      heading: '8. Seus direitos',
+      heading: '9. Seus direitos',
       paragraphs: [
         'Você pode pedir confirmação e acesso aos dados, correção, anonimização, portabilidade, eliminação, informação sobre compartilhamento e revogação do consentimento (LGPD, art. 18, e GDPR).',
-        'Como os seus dados ficam no seu aparelho, você mesmo controla a maior parte: em Configurações, apague o histórico e a carteira; ao limpar os dados do site no navegador, tudo do IsFair é removido. Para outros pedidos, escreva para {email}. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD) ou à autoridade do seu país.',
+        'Como os seus dados ficam no seu aparelho, você mesmo controla a maior parte: em Configurações, apague o histórico e a carteira; ao limpar os dados do site no navegador, tudo do IsFair é removido. Para apagar os relatos de preço enviados com a sua conta, ou para outros pedidos, escreva para {email}. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD) ou à autoridade do seu país.',
       ],
     },
     {
       id: 'menores',
-      heading: '9. Crianças e adolescentes',
+      heading: '10. Crianças e adolescentes',
       paragraphs: [
         'O IsFair não é direcionado a menores de 13 anos. Adolescentes devem usá-lo com autorização dos responsáveis.',
       ],
     },
     {
       id: 'seguranca',
-      heading: '10. Segurança e transferência internacional',
+      heading: '11. Segurança e transferência internacional',
       paragraphs: [
         'A comunicação com o IsFair é criptografada (HTTPS) e a senha da conta é guardada com hash. Alguns serviços de terceiros ficam fora do Brasil, como os do Google e da Vercel; nesses casos, a transferência segue as garantias previstas na LGPD e no GDPR.',
       ],
     },
     {
       id: 'mudancas',
-      heading: '11. Mudanças nesta Política',
+      heading: '12. Mudanças nesta Política',
       paragraphs: [
         'Quando o IsFair passar a guardar dados na nuvem (por exemplo, para sincronizar a conta entre aparelhos), esta Política será atualizada antes. Mudanças relevantes serão avisadas no app.',
       ],
     },
     {
       id: 'contato',
-      heading: '12. Contato',
+      heading: '13. Contato',
       paragraphs: ['Dúvidas ou pedidos sobre privacidade: {email}.'],
     },
   ],
@@ -381,8 +396,22 @@ const PRIVACY_EN: LegalDocument = {
       ],
     },
     {
+      id: 'relatos',
+      heading: '4. Price reports',
+      paragraphs: [
+        'If you report how much you paid for something, the report is sent to our database (Supabase) to calculate the community average. We store:',
+      ],
+      items: [
+        ['Item, city and amount', 'the product (or the name read from the photo), the city, the currency and the amount paid.'],
+        ['Month and year', 'the date of the report, so only recent prices count toward the average.'],
+        ['Where you are from', 'only if you leave the option on: the country (or region, such as the European Union) of your home currency.'],
+        ['Account', 'if you are signed in, the account’s internal ID, to prevent repeated reports and to delete your reports if you ask. It is never shown to anyone.'],
+        ['Protected IP', 'a code derived from your IP (a hash with a secret key; the IP itself is not stored), only to block spam. It is deleted after 30 days.'],
+      ],
+    },
+    {
       id: 'terceiros',
-      heading: '4. Third-party services',
+      heading: '5. Third-party services',
       paragraphs: ['To work, IsFair talks to these services, which receive your IP address and the data listed:'],
       items: [
         ['Google Gemini (Google)', 'photos, item name, city and language, for identification and estimates.'],
@@ -391,13 +420,14 @@ const PRIVACY_EN: LegalDocument = {
         ['ExchangeRate-API (open.er-api.com)', 'no personal data; we only download the day’s rates.'],
         ['Open Food Facts', 'the identified product name, to find a packaging photo.'],
         ['Google Fonts', 'the app’s font is loaded from Google’s servers.'],
+        ['Supabase', 'database for price reports (section 4) and accounts.'],
         ['Vercel', 'hosting for the website and server, with access logs (IP, browser, date).'],
-        ['Google AdSense', 'advertising, as described in section 5.'],
+        ['Google AdSense', 'advertising, as described in section 6.'],
       ],
     },
     {
       id: 'anuncios',
-      heading: '5. Ads and cookies',
+      heading: '6. Ads and cookies',
       paragraphs: [
         'IsFair is free and supported by Google AdSense ads, shown on the home page, below Quick test, at the end of a price check result, in the history, in the wallet summary and in the side menu. Never while taking a photo, paying or editing the wallet.',
         'Google and its partners use cookies and identifiers to show ads, limit repetition and measure results, including based on previous visits to this and other websites. In the EU, the UK and Switzerland, we ask for your consent before personalized ads; you can change your choice at any time.',
@@ -406,7 +436,7 @@ const PRIVACY_EN: LegalDocument = {
     },
     {
       id: 'finalidades',
-      heading: '6. Why we use data (legal bases)',
+      heading: '7. Why we use data (legal bases)',
       paragraphs: [],
       items: [
         ['Providing the service you asked for', 'estimating prices, identifying items, converting currencies and calculating change.'],
@@ -416,41 +446,41 @@ const PRIVACY_EN: LegalDocument = {
     },
     {
       id: 'retencao',
-      heading: '7. How long',
+      heading: '8. How long',
       paragraphs: [
-        'Data on your device stays there until you delete it. History, wallet and notifications have item limits, and estimates expire after 7 days. We do not store photos. Third-party retention follows each service’s policy.',
+        'Data on your device stays there until you delete it. History, wallet and notifications have item limits, and estimates expire after 7 days. We do not store photos. Price reports stay in the database while the service exists, but only those from the last 12 months count toward the average; the IP code is deleted after 30 days. Third-party retention follows each service’s policy.',
       ],
     },
     {
       id: 'direitos',
-      heading: '8. Your rights',
+      heading: '9. Your rights',
       paragraphs: [
         'You can request confirmation of and access to your data, correction, anonymization, portability, deletion, information about sharing and withdrawal of consent (LGPD art. 18 and GDPR).',
-        'Because your data lives on your device, you control most of it yourself: in Settings, clear the history and wallet; clearing the site data in your browser removes everything from IsFair. For other requests, write to {email}. You may also complain to Brazil’s National Data Protection Authority (ANPD) or to the authority in your country.',
+        'Because your data lives on your device, you control most of it yourself: in Settings, clear the history and wallet; clearing the site data in your browser removes everything from IsFair. To delete the price reports sent with your account, or for other requests, write to {email}. You may also complain to Brazil’s National Data Protection Authority (ANPD) or to the authority in your country.',
       ],
     },
     {
       id: 'menores',
-      heading: '9. Children and teenagers',
+      heading: '10. Children and teenagers',
       paragraphs: ['IsFair is not directed at children under 13. Teenagers should use it with a parent or guardian’s permission.'],
     },
     {
       id: 'seguranca',
-      heading: '10. Security and international transfers',
+      heading: '11. Security and international transfers',
       paragraphs: [
         'Communication with IsFair is encrypted (HTTPS) and the account password is stored hashed. Some third-party services are located outside Brazil, such as Google and Vercel; in those cases, transfers follow the safeguards provided for in the LGPD and GDPR.',
       ],
     },
     {
       id: 'mudancas',
-      heading: '11. Changes to this Policy',
+      heading: '12. Changes to this Policy',
       paragraphs: [
         'If IsFair starts storing data in the cloud (for example, to sync your account across devices), this Policy will be updated first. Significant changes will be announced in the app.',
       ],
     },
     {
       id: 'contato',
-      heading: '12. Contact',
+      heading: '13. Contact',
       paragraphs: ['Privacy questions or requests: {email}.'],
     },
   ],

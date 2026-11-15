@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string;
   /** "true" depois de configurar o Google em Authentication → Providers */
   readonly VITE_AUTH_GOOGLE?: string;
+  /** "true" depois de criar a tabela de relatos (supabase/reports.sql) e pôr SUPABASE_SERVICE_ROLE_KEY no servidor */
+  readonly VITE_COMMUNITY?: string;
   /** ID de publicador do AdSense, ex.: ca-pub-1234567890123456 */
   readonly VITE_ADSENSE_CLIENT?: string;
   /** IDs dos blocos de anúncio de cada lugar do app */

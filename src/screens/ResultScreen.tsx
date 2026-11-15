@@ -27,8 +27,13 @@ import { useI18n } from '../i18n';
 import { cn } from '../lib/cn';
 import { formatMoney, formatForeign, isSameCurrency } from '../lib/format';
 import { negotiationPhrase } from '../lib/negotiate';
+import { COMMUNITY_SHARED } from '../config';
+import { Flag, type FlagCode } from '../components/ui/Flag';
+import { Switch } from '../components/ui/Switch';
+import { useCommunityStats } from '../lib/community';
+import { MIN_REPORTS } from '../lib/communityConfig';
 import { VERDICT_META } from '../lib/pricing';
-import type { CommunityStats, Consultation, FxContext, VerdictLevel } from '../types';
+import type { Consultation, FxContext, VerdictLevel } from '../types';
 
 const VERDICT_ICONS: Record<VerdictLevel, LucideIcon> = {
   fair: CheckCircle2,
@@ -39,14 +44,18 @@ const VERDICT_ICONS: Record<VerdictLevel, LucideIcon> = {
 interface ResultScreenProps {
   consultation: Consultation;
   fx: FxContext;
-  stats: CommunityStats;
+  /** De onde o turista é (pela moeda de casa), oferecido no relato */
+  origin: FlagCode | null;
+  /** Muda depois que um relato é gravado, para buscar a média de novo */
+  communityRefresh: number;
   onBack: () => void;
   onPay: () => void;
-  onReport: (paid: number) => void;
+  onReport: (paid: number, origin: string | null) => void;
 }
 
-export function ResultScreen({ consultation: c, fx, stats, onBack, onPay, onReport }: ResultScreenProps) {
+export function ResultScreen({ consultation: c, fx, origin, communityRefresh, onBack, onPay, onReport }: ResultScreenProps) {
   const { t, tp, productName, productTip, cityArea, cityTip } = useI18n();
+  const stats = useCommunityStats(c, communityRefresh);
   // null para itens fora do catálogo, cujo preço veio só da IA
   const product = findProduct(c.productId);
   const name = c.item?.name ?? (product ? productName(product) : '');
@@ -146,15 +155,21 @@ export function ResultScreen({ consultation: c, fx, stats, onBack, onPay, onRepo
             </>
           }
         />
-        <ListRow
-          icon={<IconCircle><Users className="h-5 w-5" /></IconCircle>}
-          title={t('result.community')}
-          subtitle={
-            stats.reports > 0
-              ? tp('result.communityStats', stats.reports, { avg: money(stats.avgPaid) })
-              : t('result.noReports')
-          }
-        />
+        {stats !== null && (
+          <ListRow
+            icon={<IconCircle><Users className="h-5 w-5" /></IconCircle>}
+            title={t('result.community')}
+            subtitle={
+              stats === undefined
+                ? '…'
+                : stats.median !== null
+                  ? `${tp('result.communityStats', stats.reports, { avg: money(stats.median) })} · ${t('result.communityWindow')}`
+                  : stats.reports > 0
+                    ? tp('result.fewReports', stats.reports, { min: MIN_REPORTS })
+                    : t('result.noReports')
+            }
+          />
+        )}
         {c.ai?.explanation && (
           <ListRow
             icon={<IconCircle><Sparkles className="h-5 w-5" /></IconCircle>}
@@ -184,7 +199,7 @@ export function ResultScreen({ consultation: c, fx, stats, onBack, onPay, onRepo
         <Button size="lg" className="w-full" onClick={onPay}>
           {t('result.payWithWallet')}
         </Button>
-        <ReportPanel consultation={c} fx={fx} stats={stats} onReport={onReport} />
+        <ReportPanel consultation={c} fx={fx} origin={origin} onReport={onReport} />
       </div>
 
       {/* Longe dos botões: o Google pune anúncio que leva a clique acidental */}
@@ -196,13 +211,14 @@ export function ResultScreen({ consultation: c, fx, stats, onBack, onPay, onRepo
 interface ReportPanelProps {
   consultation: Consultation;
   fx: FxContext;
-  stats: CommunityStats;
-  onReport: (paid: number) => void;
+  origin: FlagCode | null;
+  onReport: (paid: number, origin: string | null) => void;
 }
 
-function ReportPanel({ consultation: c, fx, stats, onReport }: ReportPanelProps) {
-  const { t, tp } = useI18n();
+function ReportPanel({ consultation: c, fx, origin, onReport }: ReportPanelProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [shareOrigin, setShareOrigin] = useState(true);
   const [paid, setPaid] = useState(c.price);
   const currency = c.currency ?? 'BRL';
   const money = (value: number) => formatMoney(value, currency);
@@ -216,7 +232,11 @@ function ReportPanel({ consultation: c, fx, stats, onReport }: ReportPanelProps)
           </IconCircle>
         }
         title={t('result.thanks')}
-        subtitle={tp('result.thanksDetail', stats.reports, { paid: money(c.paidReported), city: cityOf(c).name })}
+        subtitle={
+          COMMUNITY_SHARED
+            ? t('result.thanksShared', { paid: money(c.paidReported), city: cityOf(c).name })
+            : t('result.thanksSaved', { paid: money(c.paidReported) })
+        }
       />
     );
   }
@@ -237,7 +257,7 @@ function ReportPanel({ consultation: c, fx, stats, onReport }: ReportPanelProps)
   return (
     <div className="animate-fade-in rounded-xl bg-muted p-4">
       <p className="font-semibold">{t('result.howMuch')}</p>
-      <p className="text-sm text-ink-2">{t('result.anonymous')}</p>
+      <p className="text-sm text-ink-2">{t(COMMUNITY_SHARED ? 'result.anonymous' : 'result.savedOnDevice')}</p>
       <div dir="ltr" className="mt-5 flex items-center justify-between">
         <StepperButton label={t('result.decrease')} icon={Minus} onClick={() => setPaid((p) => Math.max(0.5, p - 1))} />
         <div className="text-center">
@@ -261,7 +281,14 @@ function ReportPanel({ consultation: c, fx, stats, onReport }: ReportPanelProps)
           </button>
         ))}
       </div>
-      <Button className="mt-4 w-full" onClick={() => onReport(paid)}>
+      {COMMUNITY_SHARED && origin && (
+        <div className="mt-4 flex items-center gap-3">
+          <Flag code={origin} className="h-4" />
+          <span className="flex-1 text-sm">{t('result.includeOrigin')}</span>
+          <Switch checked={shareOrigin} onChange={setShareOrigin} label={t('result.includeOrigin')} />
+        </div>
+      )}
+      <Button className="mt-4 w-full" onClick={() => onReport(paid, shareOrigin ? origin : null)}>
         {t('result.send')}
       </Button>
     </div>

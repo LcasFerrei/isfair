@@ -94,9 +94,14 @@ export interface Product {
   tips: string[];
 }
 
+/** Resposta de /api/community: relatos dos últimos 12 meses de um item numa cidade */
 export interface CommunityStats {
   reports: number;
-  avgPaid: number;
+  /** Mediana do que os turistas pagaram, na moeda local; null com poucos relatos */
+  median: number | null;
+  /** Mês/ano ("AAAA-MM") do relato mais antigo e do mais recente considerados */
+  fromMonth: string | null;
+  toMonth: string | null;
 }
 
 export interface Consultation {

@@ -26,6 +26,19 @@ No plano gratuito o Google pode usar as fotos enviadas para melhorar os produtos
 2. Em Settings → Environment Variables, adicione `GEMINI_API_KEY`
 3. Deploy
 
+## Relatos da comunidade (Supabase)
+
+Quando o turista informa quanto pagou, o relato vai para a tabela `reports` no Supabase e o resultado
+mostra a mediana dos últimos 12 meses daquele item na cidade (só a partir de 5 relatos).
+
+1. No Supabase, abra o SQL Editor, cole `supabase/reports.sql` e rode
+2. Na Vercel (e no `.env.local`), adicione `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API) — nunca com `VITE_`
+3. Adicione `VITE_COMMUNITY=true` e faça um novo deploy
+
+Guardamos item, cidade, moeda, valor, mês/ano, país de origem (opcional), id da conta (se logado) e um hash do IP
+contra spam. Valores fora de ⅓×–3× da mediana são ignorados; cada IP pode mandar 30 relatos por hora e um por
+item/cidade por dia. Sem essas variáveis, os relatos ficam só no histórico do aparelho e a média não aparece.
+
 ## Estrutura
 
 ```
