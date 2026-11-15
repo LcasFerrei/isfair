@@ -5,7 +5,7 @@ export type Route = 'landing' | 'landingV2' | 'app' | 'login' | 'signup' | 'forg
 
 const PATHS: Record<Route, string> = {
   landing: '/',
-  // Prévia da página inicial 2.0 (não aparece em nenhum link)
+  // Prévia da página inicial 2.0: só no `npm run dev` (em produção, /v2 abre a página inicial)
   landingV2: '/v2',
   app: '/app',
   login: '/entrar',
@@ -19,7 +19,9 @@ const PATHS: Record<Route, string> = {
 
 function routeFromPath(path: string): Route {
   const clean = path.replace(/\/+$/, '') || '/';
-  const match = (Object.keys(PATHS) as Route[]).find((route) => PATHS[route] === clean);
+  const match = (Object.keys(PATHS) as Route[]).find(
+    (route) => PATHS[route] === clean && (route !== 'landingV2' || import.meta.env.DEV),
+  );
   return match ?? 'landing';
 }
 

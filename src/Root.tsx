@@ -6,7 +6,9 @@ import { useRouter } from './router';
 const App = lazy(() => import('./App'));
 const Landing = lazy(() => import('./pages/Landing').then((m) => ({ default: m.Landing })));
 const AuthPage = lazy(() => import('./pages/AuthPage').then((m) => ({ default: m.AuthPage })));
-const LandingV2 = lazy(() => import('./pages/LandingV2').then((m) => ({ default: m.LandingV2 })));
+// Página inicial 2.0 em construção: só existe no `npm run dev`. No build de produção o Vite remove
+// este import, então ela nem vai para o ar.
+const LandingV2 = import.meta.env.DEV ? lazy(() => import('./pages/LandingV2').then((m) => ({ default: m.LandingV2 }))) : null;
 const LegalPage = lazy(() => import('./pages/LegalPage').then((m) => ({ default: m.LegalPage })));
 
 function PageLoader() {
@@ -26,7 +28,7 @@ export function Root() {
         <App />
       ) : route === 'login' || route === 'signup' || route === 'forgot' || route === 'reset' ? (
         <AuthPage mode={route} />
-      ) : route === 'landingV2' ? (
+      ) : route === 'landingV2' && LandingV2 ? (
         <LandingV2 />
       ) : route === 'terms' || route === 'privacy' ? (
         <LegalPage doc={route} />
