@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { PRODUCTS } from '../src/data/mockData';
+import { PRODUCTS } from '../src/data/mockData.js';
 import type { IdentifyErrorCode, IdentifyRequest, IdentifyResponse } from '../src/types';
 import {
   ESTIMATE_REQUIRED,
@@ -9,8 +9,8 @@ import {
   languageName,
   parseCityContext,
   parseEstimate,
-} from './estimate';
-import { findPackagedProductImage } from './productImage';
+} from './estimate.js';
+import { findPackagedProductImage } from './productImage.js';
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 /** Usado quando o modelo principal está sobrecarregado (503) ou demora demais */

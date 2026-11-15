@@ -1,7 +1,7 @@
-import { estimatePrice } from '../server/estimate';
-import { DEFAULT_GEMINI_MODEL, FALLBACK_GEMINI_MODEL, REQUEST_TIMEOUT_MS } from '../server/identify';
-import { checkRateLimit } from '../server/rateLimit';
-import { clientIp } from '../server/supabaseAdmin';
+import { estimatePrice } from '../server/estimate.js';
+import { DEFAULT_GEMINI_MODEL, FALLBACK_GEMINI_MODEL, REQUEST_TIMEOUT_MS } from '../server/identify.js';
+import { checkRateLimit } from '../server/rateLimit.js';
+import { clientIp } from '../server/supabaseAdmin.js';
 
 /** Função serverless da Vercel: POST /api/estimate */
 export async function POST(request: Request): Promise<Response> {

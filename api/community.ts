@@ -1,4 +1,4 @@
-import { communityStats } from '../server/reports';
+import { communityStats } from '../server/reports.js';
 
 /** Função serverless da Vercel: POST /api/community */
 export async function POST(request: Request): Promise<Response> {

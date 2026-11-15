@@ -1,6 +1,6 @@
-import { DEFAULT_GEMINI_MODEL, identifyProduct } from '../server/identify';
-import { checkRateLimit } from '../server/rateLimit';
-import { clientIp } from '../server/supabaseAdmin';
+import { DEFAULT_GEMINI_MODEL, identifyProduct } from '../server/identify.js';
+import { checkRateLimit } from '../server/rateLimit.js';
+import { clientIp } from '../server/supabaseAdmin.js';
 
 /** Função serverless da Vercel: POST /api/identify */
 export async function POST(request: Request): Promise<Response> {

@@ -1,4 +1,4 @@
-import { adminClient, hashIp, type ServerEnv } from './supabaseAdmin';
+import { adminClient, hashIp, type ServerEnv } from './supabaseAdmin.js';
 
 /*
  * Limite de uso das rotas que gastam a cota do Gemini (tabela `api_calls`, ver supabase/rate_limits.sql).

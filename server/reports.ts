@@ -1,5 +1,5 @@
-import { adminClient, hashIp, type ServerEnv } from './supabaseAdmin';
-import { MIN_REPORTS } from '../src/lib/communityConfig';
+import { adminClient, hashIp, type ServerEnv } from './supabaseAdmin.js';
+import { MIN_REPORTS } from '../src/lib/communityConfig.js';
 import type { CommunityStats } from '../src/types';
 
 /*
