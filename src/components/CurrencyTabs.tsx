@@ -72,8 +72,16 @@ export function CurrencyTabs({ value, onChange, label, autoPlay = false, classNa
 
   useEffect(() => {
     pause();
-    // block: 'nearest' rola só o carrossel, sem mexer na página
-    active.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    // Rola só o carrossel, na horizontal. Não usar scrollIntoView: com o carrossel fora da tela
+    // (no celular, abaixo da dobra), ele rola a página inteira até a seção assim que ela carrega.
+    const el = track.current;
+    const btn = active.current;
+    if (!el || !btn) return;
+    const box = el.getBoundingClientRect();
+    const tab = btn.getBoundingClientRect();
+    // Em coordenadas da tela, o mesmo cálculo serve para LTR e RTL
+    const delta = tab.left < box.left ? tab.left - box.left : tab.right > box.right ? tab.right - box.right : 0;
+    if (delta) el.scrollBy({ left: delta, behavior: 'smooth' });
   }, [value]);
 
   useEffect(() => {
